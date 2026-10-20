@@ -1,0 +1,9 @@
+.vscode/
+.vs/
+.idea/
+out/
+build*/
+vcpkg_installed/
+CMakeUserPresets.json
+CMakePresets.json
+imgui.ini

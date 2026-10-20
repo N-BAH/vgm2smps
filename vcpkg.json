@@ -1,0 +1,9 @@
+{
+  "dependencies": [
+    "boost-container",
+    "boost-program-options",
+    "spdlog",
+    "zlib",
+    "fmt"
+  ]
+}
