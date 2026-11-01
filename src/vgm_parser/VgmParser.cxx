@@ -292,7 +292,7 @@ void VgmParser<OutputAdapter>::handleDacStreamControlSetup(ParseContext& ctx) {
       static_cast<uint8_t>(ctx.fileData[ctx.cursor + 2] & 0x7F)};
   const bool isSecondChip{(ctx.fileData[ctx.cursor + 2] >> 7) != 0};
 
-  if (!isSecondChip) {
+  if (not isSecondChip) {
     DacStream dacStream;
 
     const uint8_t cmd{ctx.fileData[ctx.cursor + 3]};
@@ -300,11 +300,11 @@ void VgmParser<OutputAdapter>::handleDacStreamControlSetup(ParseContext& ctx) {
 
     ctx.dacStreams[streamId] = DacStream{};
 
-    if (cmd != YM2612_COMMAND_DAC_VALUE || reg != 0) {
+    if (cmd != 0 or reg != YM2612_COMMAND_DAC_VALUE) {
       SPDLOG_WARN(
           "Incorrect DAC stream for YM2612 in VGM file. cmd:{:02X}, "
           "reg:{:02X}. Should be cmd:{:02X}, reg:{:02X}",
-          cmd, reg, YM2612_COMMAND_DAC_VALUE, 0);
+          cmd, reg, 0, YM2612_COMMAND_DAC_VALUE);
     }
 
     SPDLOG_INFO(
@@ -419,10 +419,15 @@ void VgmParser<OutputAdapter>::handleDacStreamControlPlayDataBlock(
 
     const uint16_t soundId{readBinary<uint16_t>(ctx.fileData, ctx.cursor + 2)};
     const uint8_t flags{ctx.fileData[ctx.cursor + 4]};
+    PcmBank& pcmBank{ctx.pcmBanks[dacStreamIt->second.pcmBankId]};
+
+    if (soundId >= pcmBank.blocks.size()) {
+      // This soundId was skipped in handleDataBlock stage. It's normal now.
+      return;
+    }
 
     dacStreamIt->second.soundId = soundId;
-    dacStreamIt->second.data =
-        ctx.pcmBanks[dacStreamIt->second.pcmBankId].blocks[soundId];
+    dacStreamIt->second.data = pcmBank.blocks[soundId];
 
     if (flags != 0) {
       SPDLOG_WARN(
