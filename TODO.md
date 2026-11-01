@@ -1,0 +1,3 @@
+- Add proper CI/CD scripts
+- Add testing
+- Write a proper documentation and building instructions for various platforms
