@@ -16,6 +16,7 @@
 #include "adapters/SmpsTextAdapter/SmpsTextAdapter.hxx"
 #include "utils/VgmDecompressor.hxx"
 #include "utils/getTerminalWidth.hxx"
+#include "version.hxx"
 #include "vgm_parser/VgmParser.hxx"
 
 namespace vgmc {
@@ -55,7 +56,8 @@ void commandLineParse(int argc, char** argv, std::string& inputFilePath,
 
   // clang-format off
   desc.add_options()
-    ("help", "Produce help message")
+    ("help", "Print help message and exit")
+    ("version", "Print project version and exit")
     ("input,i",  po::value(&inputFilePath), "Input file path (vgm/vgz)")
     ("output,o",  po::value(&outputPath)->default_value(outputPath), "Output path. If not specified stdout will be used")
     ("length,L", po::value<uint32_t>(&adapterSettings.maxLength), "Reduce output length in frames")
@@ -72,6 +74,19 @@ void commandLineParse(int argc, char** argv, std::string& inputFilePath,
 
   if (vm.contains("help")) {
     desc.print(std::cout);
+    exit(EXIT_SUCCESS);
+  }
+
+  if (vm.contains("version")) {
+    fmt::println("vgm2smps version: {}", VGMC_VERSION);
+#ifdef VGMC_GIT_COMMIT_HASH
+    fmt::println("commit: {}", VGMC_GIT_COMMIT_HASH);
+#endif
+#ifdef VGMC_GIT_COMMIT_DATE
+    fmt::println("commit date: {}", VGMC_GIT_COMMIT_DATE);
+#endif
+    fmt::println("");
+    fmt::println("vgm2smps created by Ivan Platonov (aka N-BAH).");
     exit(EXIT_SUCCESS);
   }
 

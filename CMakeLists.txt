@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.18.0)
-project(vgm2smps CXX)
+
+project(vgm2smps LANGUAGES CXX VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -55,7 +56,34 @@ target_link_libraries(global_dependencies INTERFACE
 
 add_executable(${PROJECT_EXE}
   src/main.cxx
+  src/version.hxx
 )
+
+find_program(HAVE_GIT git)
+
+if(HAVE_GIT)
+  execute_process(
+    COMMAND git --git-dir=.git log -1 --pretty=format:%h
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+  )
+  execute_process(
+    COMMAND git --git-dir=.git log -1 --pretty=format:%cd --date=format:%Y.%m.%d
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT_DATE
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+  )
+
+  add_compile_definitions(${PROJECT_EXE} PUBLIC
+    VGMC_GIT_COMMIT_HASH="${GIT_COMMIT_HASH}"
+    VGMC_GIT_COMMIT_DATE="${GIT_COMMIT_DATE}"
+  )
+endif()
+
+add_compile_definitions(${PROJECT_EXE} PUBLIC VGMC_VERSION="${PROJECT_VERSION}")
 
 target_link_libraries(${PROJECT_EXE} PUBLIC global_dependencies
   # Object groups as STATIC libraries
