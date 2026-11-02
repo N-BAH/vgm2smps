@@ -77,10 +77,17 @@ if(HAVE_GIT)
     ERROR_QUIET
   )
 
-  add_compile_definitions(${PROJECT_EXE} PUBLIC
-    VGMC_GIT_COMMIT_HASH="${GIT_COMMIT_HASH}"
-    VGMC_GIT_COMMIT_DATE="${GIT_COMMIT_DATE}"
-  )
+  if(GIT_COMMIT_HASH)
+    add_compile_definitions(${PROJECT_EXE} PUBLIC
+      VGMC_GIT_COMMIT_HASH="${GIT_COMMIT_HASH}"
+    )
+  endif()
+
+  if(GIT_COMMIT_DATE)
+    add_compile_definitions(${PROJECT_EXE} PUBLIC
+      VGMC_GIT_COMMIT_DATE="${GIT_COMMIT_DATE}"
+    )
+  endif()
 endif()
 
 add_compile_definitions(${PROJECT_EXE} PUBLIC VGMC_VERSION="${PROJECT_VERSION}")
