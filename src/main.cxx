@@ -2,8 +2,10 @@
 #include <spdlog/spdlog.h>
 
 #include <boost/program_options.hpp>
+#include <boost/program_options/errors.hpp>
 #include <boost/program_options/value_semantic.hpp>
 #include <cstdlib>
+#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -134,31 +136,46 @@ void commandLineParse(int argc, char** argv, std::string& inputFilePath,
 
 auto main(int argc, char** argv) -> int {
   constexpr std::string_view OUTPUT_PATH_STDOUT{"--"};
-  vgmc::VgmParserSettings parserSettings{};
-  vgmc::SmpsAdapterBaseSettings adapterSettings{};
-  std::string inputFilePath;
-  std::string outputPath{OUTPUT_PATH_STDOUT};
 
-  commandLineParse(argc, argv, inputFilePath, outputPath, parserSettings,
-                   adapterSettings);
+  try {
+    vgmc::VgmParserSettings parserSettings{};
+    vgmc::SmpsAdapterBaseSettings adapterSettings{};
+    std::string inputFilePath;
+    std::string outputPath{OUTPUT_PATH_STDOUT};
 
-  SPDLOG_INFO("Process VGM file: {}", inputFilePath);
-  const std::vector<uint8_t> vgmData =
-      vgmc::decompressVgmFileToRam(inputFilePath);
+    try {
+      commandLineParse(argc, argv, inputFilePath, outputPath, parserSettings,
+                       adapterSettings);
+    } catch (const boost::program_options::error& e) {
+      SPDLOG_ERROR("Command line: {}", e.what());
+      return EXIT_FAILURE;
+    }
 
-  std::ostream* out{};
-  std::ofstream outFile;
+    SPDLOG_INFO("Process VGM file: {}", inputFilePath);
+    const std::vector<uint8_t> vgmData =
+        vgmc::decompressVgmFileToRam(inputFilePath);
 
-  if (outputPath != OUTPUT_PATH_STDOUT) {
-    outFile.open(outputPath, std::ios::trunc);
-    out = &outFile;
-  } else {
-    out = &std::cout;
+    std::ostream* out{};
+    std::ofstream outFile;
+
+    if (outputPath != OUTPUT_PATH_STDOUT) {
+      outFile.open(outputPath, std::ios::trunc);
+      out = &outFile;
+    } else {
+      out = &std::cout;
+    }
+
+    // TODO: Design settings system across adapters and mixins
+    vgmc::runConversion<vgmc::SmpsTextAdapter>(vgmData, *out, parserSettings,
+                                               adapterSettings);
+    SPDLOG_INFO("Done!");
+  } catch (const std::exception& e) {
+    SPDLOG_CRITICAL("Unhandled exception: {}", e.what());
+    return EXIT_FAILURE;
+  } catch (...) {
+    SPDLOG_CRITICAL("Unhandled unknown exception!");
+    return EXIT_FAILURE;
   }
 
-  // TODO: Design settings system across adapters and mixins
-  vgmc::runConversion<vgmc::SmpsTextAdapter>(vgmData, *out, parserSettings,
-                                             adapterSettings);
-  SPDLOG_INFO("Done!");
   return EXIT_SUCCESS;
 }
